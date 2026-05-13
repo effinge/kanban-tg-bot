@@ -58,7 +58,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_task(title, description, assignee, deadline, priority):
+def add_task(title, description, assignee, deadline, priority) -> int:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -199,5 +199,6 @@ def get_comments_by_task(task_id):
     conn.close()
     return comments
 
-print(get_all_tasks())
-print(get_task(2))
+# print(get_all_tasks())
+# delete_task(2)
+# print(get_all_tasks())
