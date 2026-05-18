@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 from database.dbase import add_task, get_task, get_all_tasks, update_task_status
 from database.dbase import add_task, get_task, get_all_tasks
+=======
+from database.base import add_task, get_task, get_all_tasks
+>>>>>>> 7ce5aea41ee7f2cce616437c3c2efb846b7c10f2
 from models.models import Task
 
 
