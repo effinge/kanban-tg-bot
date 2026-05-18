@@ -1,11 +1,15 @@
+import os
 import sqlite3
 import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-DB_NAME = 'database/dbase.db'
+DB_DIR = "database"
+DB_NAME = os.path.join(DB_DIR, "dbase.db")
+
 
 def get_connection():
+    os.makedirs(DB_DIR, exist_ok=True)
     return sqlite3.connect(DB_NAME)
 
 def init_db():
@@ -199,6 +203,5 @@ def get_comments_by_task(task_id):
     conn.close()
     return comments
 
-# print(get_all_tasks())
-# delete_task(2)
-# print(get_all_tasks())
+add_task("Test Task", "This is a test task", "Alice", "2024-12-31", "high")
+print(get_all_tasks())
