@@ -17,6 +17,12 @@ class CommandHandler:
             
         elif text.startswith("/add"):
             self.handle_add(chat_id, text)
+        
+        elif text.startswith("/tasks"):
+            self.handle_tasks(chat_id)
+
+        elif text.startswith("/task"):
+            self.handle_task(chat_id, text)
 
         else:
             self.bot.send_message(
@@ -55,7 +61,24 @@ class CommandHandler:
                 ]
             ]
         }
-    
+    def handle_tasks(self, chat_id):
+        from services.task_service import get_all_tasks_list
+        from services.formatter import format_task_list
+        tasks = get_all_tasks_list()
+        self.bot.send_message(chat_id, format_task_list(tasks))
+
+    def handle_task(self, chat_id, text):
+        from services.task_service import get_task_by_id
+        from services.formatter import format_task
+        raw = text.removeprefix("/task").strip()
+        if not raw.isdigit():
+            self.bot.send_message(chat_id, "Укажи номер. Например: /task 1")
+            return
+        task = get_task_by_id(int(raw))
+        if not task:
+            self.bot.send_message(chat_id, f"Задача #{raw} не найдена.")
+            return
+        self.bot.send_message(chat_id, format_task(task))
         
         self.bot.send_message(
             chat_id,
