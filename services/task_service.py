@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-from database.dbase import add_task, get_task, get_all_tasks, update_task_status
-from database.dbase import add_task, get_task, get_all_tasks
-=======
-from database.base import add_task, get_task, get_all_tasks
->>>>>>> 7ce5aea41ee7f2cce616437c3c2efb846b7c10f2
+from database.base import add_task, get_task, get_all_tasks,update_task_status
 from models.models import Task
 
 
@@ -57,11 +52,25 @@ VALID_PRIORITIES = {"low", "medium", "high"}
 VALID_STATUSES = {"Backlog", "To Do", "In Progress", "Review", "Done"}
 
 
-def validate_task(title, priority):
+def validate_task(title, description, assignee, deadline, priority):
     if not title:
-        return "Название не может быть пустым."
-    if priority.lower() not in VALID_PRIORITIES:
-        return "Приоритет должен быть: low, medium, high."
+        return "Название задачи не может быть пустым."
+
+    if not description:
+        return "Описание задачи не может быть пустым."
+
+    if not assignee:
+        return "Исполнитель задачи не может быть пустым."
+
+    if not deadline:
+        return "Дедлайн задачи не может быть пустым."
+
+    if priority not in VALID_PRIORITIES:
+        return (
+            "Неверный приоритет.\n"
+            "Доступные приоритеты: low, medium, high, critical"
+        )
+
     return None
 
 
