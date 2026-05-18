@@ -1,18 +1,12 @@
+from database.dbase import add_task, get_task, get_all_tasks
 from models.models import Task
-from storage.storage import load_tasks, save_tasks
-
-
-def _next_id(tasks):
-    if not tasks:
-        return 1
-    return max(t["task_id"] for t in tasks) + 1
 
 
 def create_task(title, description, assignee, deadline, priority):
-    tasks = load_tasks()
+    task_id = add_task(title, description, assignee, deadline, priority)
 
-    task = Task(
-        task_id=_next_id(tasks),
+    return Task(
+        task_id=task_id,
         title=title,
         description=description,
         assignee=assignee,
@@ -20,18 +14,36 @@ def create_task(title, description, assignee, deadline, priority):
         priority=priority,
     )
 
-    tasks.append(vars(task))
-    save_tasks(tasks)
-    return task
-
-
-def get_all_tasks():
-    return load_tasks()
-
 
 def get_task_by_id(task_id):
-    tasks = load_tasks()
-    for t in tasks:
-        if t["task_id"] == task_id:
-            return t
-    return None
+    row = get_task(task_id)
+    if row is None:
+        return None
+
+    return {
+        "task_id": row[0],
+        "title": row[1],
+        "description": row[2],
+        "assignee": row[3],
+        "deadline": row[4],
+        "priority": row[5],
+        "status": row[6],
+        "created_at": row[7],
+    }
+
+
+def get_all_tasks_list():
+    rows = get_all_tasks()
+    return [
+        {
+            "task_id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "assignee": row[3],
+            "deadline": row[4],
+            "priority": row[5],
+            "status": row[6],
+            "created_at": row[7],
+        }
+        for row in rows
+    ]
