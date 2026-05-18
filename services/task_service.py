@@ -52,11 +52,25 @@ VALID_PRIORITIES = {"low", "medium", "high"}
 VALID_STATUSES = {"Backlog", "To Do", "In Progress", "Review", "Done"}
 
 
-def validate_task(title, priority):
+def validate_task(title, description, assignee, deadline, priority):
     if not title:
-        return "Название не может быть пустым."
-    if priority.lower() not in VALID_PRIORITIES:
-        return "Приоритет должен быть: low, medium, high."
+        return "Название задачи не может быть пустым."
+
+    if not description:
+        return "Описание задачи не может быть пустым."
+
+    if not assignee:
+        return "Исполнитель задачи не может быть пустым."
+
+    if not deadline:
+        return "Дедлайн задачи не может быть пустым."
+
+    if priority not in VALID_PRIORITIES:
+        return (
+            "Неверный приоритет.\n"
+            "Доступные приоритеты: low, medium, high, critical"
+        )
+
     return None
 
 
