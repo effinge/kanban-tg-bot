@@ -1,4 +1,4 @@
-from database.base import add_task, get_task, get_all_tasks,update_task_status
+from database.base import add_task, get_task, get_all_tasks,update_task_status, get_tasks_by_status
 from models.models import Task
 
 
@@ -83,3 +83,19 @@ def move_task(task_id, new_status):
         return False, f"Задача #{task_id} не найдена."
 
     return True, None
+
+def get_tasks_by_status_grouped():
+    statuses = ["Backlog", "To Do", "In Progress", "Review", "Done"]
+    result = {}
+    for status in statuses:
+        rows = get_tasks_by_status(status)
+        result[status] = [
+            {
+                "task_id": row[0],
+                "title": row[1],
+                "assignee": row[3],
+                "priority": row[5],
+            }
+            for row in rows
+        ]
+    return result
