@@ -25,6 +25,9 @@ class CommandHandler:
 
         elif text.startswith("/task"):
             self.handle_task(chat_id, text)
+        
+        elif text.startswith("/board"):
+            self.handle_board(chat_id)
 
         else:
             self.bot.send_message(
@@ -123,6 +126,12 @@ class CommandHandler:
             self.bot.send_message(chat_id, f"Задача #{raw} не найдена.")
             return
         self.bot.send_message(chat_id, format_task(task))
+    
+    def handle_board(self, chat_id):
+        from services.task_service import get_tasks_by_status_grouped
+        from services.formatter import format_board
+        grouped = get_tasks_by_status_grouped()
+        self.bot.send_message(chat_id, format_board(grouped))
         
         self.bot.send_message(
             chat_id,
