@@ -1,4 +1,4 @@
-from database.dbase import add_task, get_task, get_all_tasks
+from database.base import add_task, get_task, get_all_tasks
 from models.models import Task
 
 
