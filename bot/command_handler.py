@@ -1,6 +1,3 @@
-from services.task_service import create_task
-from services.formatter import format_task
-
 class CommandHandler:
     def __init__(self, bot):
         self.bot = bot
@@ -59,25 +56,6 @@ class CommandHandler:
             ]
         }
     
-    def handle_add(self, chat_id: int, text: str) -> None:
-        raw = text.removeprefix("/add").strip()
-        parts = [p.strip() for p in raw.split("|")]
-
-        if len(parts) != 5:
-            self.bot.send_message(
-                chat_id,
-             "Неверный формат.\n Используй:\n/add Название | Описание | Исполнитель | Дедлайн | Приоритет"
-            )
-            return
-
-        title, description, assignee, deadline, priority = parts
-
-        if not title:
-            self.bot.send_message(chat_id, "Название не может быть пустым.")
-            return
-
-        task = create_task(title, description, assignee, deadline, priority)
-        self.bot.send_message(chat_id, f"Задача создана.\n\n{format_task(task)}")
         
         self.bot.send_message(
             chat_id,
