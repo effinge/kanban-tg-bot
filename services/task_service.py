@@ -1,4 +1,4 @@
-from database.base import add_task, get_task, get_all_tasks,update_task_status, get_tasks_by_status
+from database.base import add_task, get_task, get_all_tasks,update_task_status, get_tasks_by_status, delete_task
 from models.models import Task
 
 
@@ -99,3 +99,6 @@ def get_tasks_by_status_grouped():
             for row in rows
         ]
     return result
+
+def delete_task_by_id(task_id):
+    return delete_task(task_id)

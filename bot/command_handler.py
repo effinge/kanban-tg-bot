@@ -31,6 +31,9 @@ class CommandHandler:
 
         elif text.startswith("/move"):
             self.handle_move(chat_id, text)
+        
+        elif text.startswith("/delete"):
+            self.handle_delete(chat_id, text)
 
         else:
             self.bot.send_message(
@@ -160,7 +163,22 @@ class CommandHandler:
             return
 
         self.bot.send_message(chat_id, f"Задача #{task_id} перемещена в {new_status}.")
-        
+
+    def handle_delete(self, chat_id, text):
+        from services.task_service import delete_task_by_id
+        raw = text.removeprefix("/delete").strip()
+
+        if not raw.isdigit():
+            self.bot.send_message(chat_id, "Укажи номер. Например: /delete 1")
+            return
+
+        success = delete_task_by_id(int(raw))
+        if not success:
+            self.bot.send_message(chat_id, f"Задача #{raw} не найдена.")
+            return
+
+        self.bot.send_message(chat_id, f"Задача #{raw} удалена.")    
+
         self.bot.send_message(
             chat_id,
             "Главное меню бота.\n\n Выберите раздел.",
