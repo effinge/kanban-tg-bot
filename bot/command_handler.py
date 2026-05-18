@@ -29,6 +29,9 @@ class CommandHandler:
         elif text.startswith("/board"):
             self.handle_board(chat_id)
 
+        elif text.startswith("/move"):
+            self.handle_move(chat_id, text)
+
         else:
             self.bot.send_message(
             chat_id,
@@ -132,6 +135,31 @@ class CommandHandler:
         from services.formatter import format_board
         grouped = get_tasks_by_status_grouped()
         self.bot.send_message(chat_id, format_board(grouped))
+        
+    def handle_move(self, chat_id, text):
+        from services.task_service import move_task
+        raw = text.removeprefix("/move").strip()
+        parts = raw.split()
+
+        if len(parts) != 2:
+            self.bot.send_message(
+                chat_id,
+                "Неверный формат.\nИспользуй:\n/move 1 In Progress"
+            )
+            return
+
+        task_id, new_status = parts[0], " ".join(parts[1:])
+
+        if not task_id.isdigit():
+            self.bot.send_message(chat_id, "Укажи номер задачи. Например: /move 1 Done")
+            return
+
+        success, error = move_task(int(task_id), new_status)
+        if not success:
+            self.bot.send_message(chat_id, error)
+            return
+
+        self.bot.send_message(chat_id, f"Задача #{task_id} перемещена в {new_status}.")
         
         self.bot.send_message(
             chat_id,
