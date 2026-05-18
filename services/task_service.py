@@ -1,3 +1,4 @@
+from database.dbase import add_task, get_task, get_all_tasks, update_task_status
 from database.dbase import add_task, get_task, get_all_tasks
 from models.models import Task
 
@@ -47,3 +48,25 @@ def get_all_tasks_list():
         }
         for row in rows
     ]
+
+VALID_PRIORITIES = {"low", "medium", "high"}
+VALID_STATUSES = {"Backlog", "To Do", "In Progress", "Review", "Done"}
+
+
+def validate_task(title, priority):
+    if not title:
+        return "Название не может быть пустым."
+    if priority.lower() not in VALID_PRIORITIES:
+        return "Приоритет должен быть: low, medium, high."
+    return None
+
+
+def move_task(task_id, new_status):
+    if new_status not in VALID_STATUSES:
+        return False, f"Неверный статус. Доступны: {', '.join(VALID_STATUSES)}"
+
+    success = update_task_status(task_id, new_status)
+    if not success:
+        return False, f"Задача #{task_id} не найдена."
+
+    return True, None
