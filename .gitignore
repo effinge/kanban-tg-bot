@@ -6,10 +6,10 @@ venv/
 
 .env
 
-data/*.db
-data/*.sqlite
-data/*.sqlite3
-!data/.gitkeep
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+!database/.gitkeep
 
 .DS_Store
 .idea/
