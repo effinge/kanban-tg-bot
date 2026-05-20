@@ -1,11 +1,15 @@
+import os
 import sqlite3
 import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-DB_NAME = 'database/dbase.db'
+DB_DIR = "database"
+DB_NAME = os.path.join(DB_DIR, "dbase.db")
+
 
 def get_connection():
+    os.makedirs(DB_DIR, exist_ok=True)
     return sqlite3.connect(DB_NAME)
 
 def init_db():
@@ -199,6 +203,72 @@ def get_comments_by_task(task_id):
     conn.close()
     return comments
 
-# print(get_all_tasks())
-# delete_task(2)
-# print(get_all_tasks())
+def get_tasks_count_by_status():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, COUNT(*)
+        FROM tasks
+        GROUP BY status
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return dict(rows)
+
+def get_tasks_ordered_by_deadline():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, title, description, assignee, deadline, priority, status, created_at
+        FROM tasks
+        ORDER BY deadline
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+def get_total_tasks_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM tasks
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+def get_members_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM members
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
