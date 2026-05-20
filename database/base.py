@@ -67,9 +67,9 @@ def add_task(title, description, assignee, deadline, priority) -> int:
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO tasks (title, description, assignee, deadline, priority)
-    VALUES (?, ?, ?, ?, ?)
-    """, (title, description, assignee, deadline, priority))
+    INSERT INTO tasks (title, description, assignee, deadline, priority, status)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (title, description, assignee, deadline, priority, "backlog"))
 
     conn.commit()
     task_id = cursor.lastrowid
