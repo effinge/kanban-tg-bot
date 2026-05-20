@@ -344,6 +344,21 @@ def add_team_member(team_id, user_id, username, role="member"):
 
     cursor.execute(
         """
+        SELECT id
+        FROM team_members
+        WHERE team_id = ? AND user_id = ?
+        """,
+        (team_id, user_id),
+    )
+
+    existing_member = cursor.fetchone()
+
+    if existing_member is not None:
+        conn.close()
+        return False
+
+    cursor.execute(
+        """
         INSERT INTO team_members (team_id, user_id, username, role)
         VALUES (?, ?, ?, ?)
         """,
@@ -352,6 +367,8 @@ def add_team_member(team_id, user_id, username, role="member"):
 
     conn.commit()
     conn.close()
+
+    return True
 
 
 def get_user_team(user_id):
@@ -382,7 +399,7 @@ def get_team_members(team_id):
 
     cursor.execute(
         """
-        SELECT id, user_id, username, role
+        SELECT user_id, username, role
         FROM team_members
         WHERE team_id = ?
         ORDER BY id

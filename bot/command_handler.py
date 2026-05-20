@@ -9,6 +9,7 @@ from services.task_service import (
 )
 from services.member_service import create_member, get_members_text
 from services.stats_service import get_stats_text, get_deadlines_text
+from services.team_service import create_team, join_team
 
 
 class CommandHandler:
@@ -17,8 +18,13 @@ class CommandHandler:
 
     def handle(self, message):
         chat_id = message["chat"]["id"]
+        user_id = message["from"]["id"]
         text = message.get("text", "")
 
+        if user_id in self.bot.user_states and not text.startswith("/"):
+            self.handle_user_state(message)
+            return
+        
         if text.startswith("/start"):
             self.handle_start(chat_id)
 
@@ -65,11 +71,26 @@ class CommandHandler:
             )
 
     def handle_start(self, chat_id):
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "➕ Создать команду", "callback_data": "create_team"},
+                ],
+                [
+                    {"text": "🔑 Присоединиться к команде", "callback_data": "join_team"},
+                ],
+                [
+                    {"text": "❓ Помощь", "callback_data": "show_start_help"},
+                ],
+            ]
+        }
+
         self.bot.send_message(
             chat_id,
-            "Привет! Я Kanban FEFU Bot.\n\n"
-            "Я помогу вашей команде вести задачи по Kanban-доске.\n\n"
-            "Напиши /help, чтобы посмотреть команды."
+            "Привет! Это Kanban Bot для командной работы.\n\n"
+            "Здесь можно вести задачи проекта по Kanban-доске прямо в Telegram.\n\n"
+            "Чтобы начать работу, создай команду или присоединись к существующей по коду.",
+            reply_markup=keyboard,
         )
 
     def handle_help(self, chat_id):
@@ -301,3 +322,139 @@ class CommandHandler:
 
     def handle_deadlines(self, chat_id):
         self.bot.send_message(chat_id, get_deadlines_text())
+        
+    def handle_user_state(self, message):
+        chat_id = message["chat"]["id"]
+        user_id = message["from"]["id"]
+        username = message["from"].get("username", "unknown")
+        text = message.get("text", "").strip()
+
+        state = self.bot.user_states.get(user_id)
+
+        if state is None:
+            return
+
+        action = state.get("action")
+
+        if action == "create_team":
+            self.process_create_team(chat_id, user_id, username, text)
+
+        elif action == "join_team":
+            self.process_join_team(chat_id, user_id, username, text)
+
+        elif action == "add_task":
+            self.process_add_task_step(chat_id, user_id, text)
+
+        else:
+            self.bot.send_message(chat_id, "Неизвестное действие.")
+            del self.bot.user_states[user_id]
+    
+    def process_create_team(self, chat_id, user_id, username, team_name):
+        team, error = create_team(user_id, username, team_name)
+
+        if error:
+            self.bot.send_message(chat_id, error)
+            return
+
+        del self.bot.user_states[user_id]
+
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "🏠 Открыть меню", "callback_data": "main_menu"},
+                ]
+            ]
+        }
+
+        self.bot.send_message(
+            chat_id,
+            "Команда создана!\n\n"
+            f"Название: {team['name']}\n"
+            f"Код команды: {team['code']}\n\n"
+            "Отправь этот код другим участникам, чтобы они могли присоединиться.",
+            reply_markup=keyboard,
+        )
+
+    def process_join_team(self, chat_id, user_id, username, code):
+        team, error = join_team(user_id, username, code)
+
+        if error:
+            self.bot.send_message(chat_id, error)
+            return
+
+        del self.bot.user_states[user_id]
+
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "🏠 Открыть меню", "callback_data": "main_menu"},
+                ]
+            ]
+        }
+
+        self.bot.send_message(
+            chat_id,
+            "Ты присоединился к команде!\n\n"
+            f"Название: {team['name']}\n"
+            f"Код команды: {team['code']}",
+            reply_markup=keyboard,
+        )
+    
+    def process_add_task_step(self, chat_id, user_id, text):
+        state = self.bot.user_states[user_id]
+        step = state.get("step")
+        data = state.get("data", {})
+
+        if step == "title":
+            data["title"] = text
+            state["step"] = "description"
+
+            self.bot.send_message(
+                chat_id,
+                "Теперь введи описание задачи:"
+            )
+
+        elif step == "description":
+            data["description"] = text
+            state["step"] = "assignee"
+
+            self.bot.send_message(
+                chat_id,
+                "Теперь введи исполнителя задачи:"
+            )
+
+        elif step == "assignee":
+            data["assignee"] = text
+            state["step"] = "deadline"
+
+            self.bot.send_message(
+                chat_id,
+                "Теперь введи дедлайн задачи.\n\n"
+                "Например: 25.05"
+            )
+
+        elif step == "deadline":
+            data["deadline"] = text
+            state["step"] = "priority"
+
+            keyboard = {
+                "inline_keyboard": [
+                    [
+                        {"text": "Low", "callback_data": "priority_low"},
+                        {"text": "Medium", "callback_data": "priority_medium"},
+                    ],
+                    [
+                        {"text": "High", "callback_data": "priority_high"},
+                        {"text": "Critical", "callback_data": "priority_critical"},
+                    ],
+                ]
+            }
+
+            self.bot.send_message(
+                chat_id,
+                "Выбери приоритет задачи:",
+                reply_markup=keyboard,
+            )
+
+        state["data"] = data
+        self.bot.user_states[user_id] = state
