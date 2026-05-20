@@ -21,6 +21,7 @@ from bot.keyboards import (
     main_menu_keyboard,
     task_actions_keyboard,
     tasks_keyboard,
+    task_priority_keyboard,
 )
 
 
@@ -397,24 +398,11 @@ class CommandHandler:
             data["deadline"] = text
             state["step"] = "priority"
 
-            keyboard = {
-                "inline_keyboard": [
-                    [
-                        {"text": "Low", "callback_data": "priority_low"},
-                        {"text": "Medium", "callback_data": "priority_medium"},
-                    ],
-                    [
-                        {"text": "High", "callback_data": "priority_high"},
-                        {"text": "Critical", "callback_data": "priority_critical"},
-                    ],
-                ]
-            }
-
-            self.bot.send_message(
-                chat_id,
-                "Выбери приоритет задачи:",
-                reply_markup=keyboard,
-            )
+        self.bot.send_message(
+            chat_id,
+            "Выбери приоритет задачи:",
+            reply_markup=task_priority_keyboard(),
+        )
 
         state["data"] = data
         self.bot.user_states[user_id] = state

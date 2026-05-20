@@ -36,24 +36,6 @@ class CallbackHandler:
         user_id = callback_query["from"]["id"]
         callback_data = callback_query["data"]
 
-        if callback_data == "show_board":
-            self.show_board(chat_id)
-
-        elif callback_data == "show_tasks":
-            self.show_tasks(chat_id)
-
-        elif callback_data == "show_members":
-            self.show_members(chat_id)
-
-        elif callback_data == "show_stats":
-            self.show_stats(chat_id)
-
-        elif callback_data == "show_deadlines":
-            self.show_deadlines(chat_id)
-
-        elif callback_data == "show_help":
-            self.show_help(chat_id)
-            
         if callback_data == "create_team":
             self.start_create_team(chat_id, user_id)
 
@@ -71,6 +53,24 @@ class CallbackHandler:
 
         elif callback_data.startswith("priority_"):
             self.finish_task_with_priority(chat_id, user_id, callback_data)
+
+        elif callback_data == "show_board":
+            self.show_board(chat_id)
+
+        elif callback_data == "show_tasks":
+            self.show_tasks(chat_id)
+
+        elif callback_data == "show_members":
+            self.show_members(chat_id, user_id)
+
+        elif callback_data == "show_stats":
+            self.show_stats(chat_id)
+
+        elif callback_data == "show_deadlines":
+            self.show_deadlines(chat_id)
+
+        elif callback_data == "show_help":
+            self.show_help(chat_id)
 
         elif callback_data == "task:add_help":
             self.show_add_help(chat_id)
@@ -289,31 +289,11 @@ class CallbackHandler:
 
 
     def show_main_menu(self, chat_id):
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "➕ Создать задачу", "callback_data": "add_task"},
-                ],
-                [
-                    {"text": "📋 Все задачи", "callback_data": "show_tasks"},
-                    {"text": "🧱 Доска", "callback_data": "show_board"},
-                ],
-                [
-                    {"text": "👥 Участники", "callback_data": "show_members"},
-                    {"text": "📊 Статистика", "callback_data": "show_stats"},
-                ],
-                [
-                    {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
-                    {"text": "❓ Помощь", "callback_data": "show_help"},
-                ],
-            ]
-        }
-
         self.bot.send_message(
             chat_id,
             "Главное меню команды.\n\n"
             "Выбери действие:",
-            reply_markup=keyboard,
+            reply_markup=main_menu_keyboard(),
         )
 
 

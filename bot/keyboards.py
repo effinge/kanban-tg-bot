@@ -11,18 +11,18 @@ def main_menu_keyboard():
     return {
         "inline_keyboard": [
             [
-                {"text": "📋 Доска", "callback_data": "show_board"},
-                {"text": "📌 Все задачи", "callback_data": "show_tasks"},
+                {"text": "➕ Создать задачу", "callback_data": "add_task"},
             ],
             [
-                {"text": "➕ Создать задачу", "callback_data": "task:add_help"},
+                {"text": "🧱 Доска", "callback_data": "show_board"},
+                {"text": "📋 Все задачи", "callback_data": "show_tasks"},
+            ],
+            [
                 {"text": "👥 Участники", "callback_data": "show_members"},
-            ],
-            [
                 {"text": "📊 Статистика", "callback_data": "show_stats"},
-                {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
             ],
             [
+                {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
                 {"text": "❓ Помощь", "callback_data": "show_help"},
             ],
         ]
@@ -52,8 +52,8 @@ def tasks_keyboard(tasks):
 
     keyboard.append(
         [
-            {"text": "➕ Создать", "callback_data": "task:add_help"},
-            {"text": "📋 Доска", "callback_data": "show_board"},
+            {"text": "➕ Создать", "callback_data": "add_task"},
+            {"text": "🧱 Доска", "callback_data": "show_board"},
         ]
     )
 
@@ -74,8 +74,11 @@ def task_actions_keyboard(task_id):
                 },
             ],
             [
-                {"text": "📌 Все задачи", "callback_data": "show_tasks"},
-                {"text": "📋 Доска", "callback_data": "show_board"},
+                {"text": "📋 Все задачи", "callback_data": "show_tasks"},
+                {"text": "🧱 Доска", "callback_data": "show_board"},
+            ],
+            [
+                {"text": "➕ Создать задачу", "callback_data": "add_task"},
             ],
         ]
     }
@@ -86,6 +89,7 @@ def task_status_keyboard(task_id, current_status=None):
 
     for status, title in TASK_STATUSES:
         text = f"✓ {title}" if status == current_status else title
+
         keyboard.append(
             [
                 {
@@ -128,11 +132,46 @@ def board_keyboard():
     return {
         "inline_keyboard": [
             [
-                {"text": "📌 Все задачи", "callback_data": "show_tasks"},
-                {"text": "➕ Создать", "callback_data": "task:add_help"},
+                {"text": "📋 Все задачи", "callback_data": "show_tasks"},
+                {"text": "➕ Создать", "callback_data": "add_task"},
             ],
             [
                 {"text": "🔄 Обновить доску", "callback_data": "show_board"},
+            ],
+            [
+                {"text": "🏠 Главное меню", "callback_data": "main_menu"},
+            ],
+        ]
+    }
+
+
+def task_priority_keyboard():
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "Low", "callback_data": "priority_low"},
+                {"text": "Medium", "callback_data": "priority_medium"},
+            ],
+            [
+                {"text": "High", "callback_data": "priority_high"},
+                {"text": "Critical", "callback_data": "priority_critical"},
+            ],
+        ]
+    }
+
+
+def after_task_created_keyboard():
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🧱 Открыть доску", "callback_data": "show_board"},
+                {"text": "📋 Все задачи", "callback_data": "show_tasks"},
+            ],
+            [
+                {"text": "➕ Создать ещё задачу", "callback_data": "add_task"},
+            ],
+            [
+                {"text": "🏠 Главное меню", "callback_data": "main_menu"},
             ],
         ]
     }
