@@ -18,7 +18,7 @@ def get_members_text():
 
     result = "Участники команды:\n\n"
 
-    for member_id, name in members:
+    for member_id, name, _telegram_id in members:
         result += f"{member_id}. {name}\n"
 
     return result
