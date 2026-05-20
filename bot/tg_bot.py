@@ -16,6 +16,8 @@ class TelegramBot:
         self.api_url = f"https://api.telegram.org/bot{self.token}"
         self.last_update_id = 0
 
+        self.user_states = {}
+        
         self.command_handler = CommandHandler(self)
         self.callback_handler = CallbackHandler(self)
 
