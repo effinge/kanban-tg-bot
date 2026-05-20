@@ -3,7 +3,6 @@ from services.task_service import (
     get_tasks_by_status_grouped,
 )
 
-
 class CallbackHandler:
     def __init__(self, bot):
         self.bot = bot
