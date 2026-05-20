@@ -7,6 +7,8 @@ from services.task_service import (
     move_task,
     delete_task_by_id,
 )
+from services.member_service import create_member, get_members_text
+from services.stats_service import get_stats_text, get_deadlines_text
 
 
 class CommandHandler:
@@ -43,6 +45,18 @@ class CommandHandler:
 
         elif text.startswith("/delete"):
             self.handle_delete(chat_id, text)
+        
+        elif text.startswith("/addmember"):
+            self.handle_add_member(chat_id, text)
+
+        elif text.startswith("/members"):
+            self.handle_members(chat_id)
+
+        elif text.startswith("/stats"):
+            self.handle_stats(chat_id)
+
+        elif text.startswith("/deadlines"):
+            self.handle_deadlines(chat_id)
 
         else:
             self.bot.send_message(
@@ -267,3 +281,23 @@ class CommandHandler:
             return
 
         self.bot.send_message(chat_id, f"Задача #{raw} удалена.")
+    
+    def handle_add_member(self, chat_id, text):
+        name = text.replace("/addmember", "", 1).strip()
+
+        success, error = create_member(name)
+
+        if not success:
+            self.bot.send_message(chat_id, error)
+            return
+
+        self.bot.send_message(chat_id, f"Участник {name} добавлен.")
+
+    def handle_members(self, chat_id):
+        self.bot.send_message(chat_id, get_members_text())
+
+    def handle_stats(self, chat_id):
+        self.bot.send_message(chat_id, get_stats_text())
+
+    def handle_deadlines(self, chat_id):
+        self.bot.send_message(chat_id, get_deadlines_text())
