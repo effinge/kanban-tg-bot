@@ -17,8 +17,13 @@ class CommandHandler:
 
     def handle(self, message):
         chat_id = message["chat"]["id"]
+        user_id = message["from"]["id"]
         text = message.get("text", "")
 
+        if user_id in self.bot.user_states and not text.startswith("/"):
+            self.handle_user_state(message)
+            return
+        
         if text.startswith("/start"):
             self.handle_start(chat_id)
 
@@ -65,11 +70,26 @@ class CommandHandler:
             )
 
     def handle_start(self, chat_id):
+        keyboard = {
+            "inline_keyboard": [
+                [
+                    {"text": "➕ Создать команду", "callback_data": "create_team"},
+                ],
+                [
+                    {"text": "🔑 Присоединиться к команде", "callback_data": "join_team"},
+                ],
+                [
+                    {"text": "❓ Помощь", "callback_data": "show_start_help"},
+                ],
+            ]
+        }
+
         self.bot.send_message(
             chat_id,
-            "Привет! Я Kanban FEFU Bot.\n\n"
-            "Я помогу вашей команде вести задачи по Kanban-доске.\n\n"
-            "Напиши /help, чтобы посмотреть команды."
+            "Привет! Это Kanban Bot для командной работы.\n\n"
+            "Здесь можно вести задачи проекта по Kanban-доске прямо в Telegram.\n\n"
+            "Чтобы начать работу, создай команду или присоединись к существующей по коду.",
+            reply_markup=keyboard,
         )
 
     def handle_help(self, chat_id):
