@@ -203,5 +203,72 @@ def get_comments_by_task(task_id):
     conn.close()
     return comments
 
-add_task("Test Task", "This is a test task", "Alice", "2024-12-31", "high")
-print(get_all_tasks())
+def get_tasks_count_by_status():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, COUNT(*)
+        FROM tasks
+        GROUP BY status
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return dict(rows)
+
+def get_tasks_ordered_by_deadline():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, title, description, assignee, deadline, priority, status, created_at
+        FROM tasks
+        ORDER BY deadline
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+def get_total_tasks_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM tasks
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+def get_members_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM members
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
