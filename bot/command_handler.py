@@ -9,6 +9,18 @@ from services.task_service import (
 )
 from services.member_service import create_member, get_members_text
 from services.stats_service import get_stats_text, get_deadlines_text
+from services.formatter import (
+    ADD_TASK_HELP_TEXT,
+    HELP_TEXT,
+    format_board,
+    format_tasks_list,
+)
+from bot.keyboards import (
+    board_keyboard,
+    main_menu_keyboard,
+    task_actions_keyboard,
+    tasks_keyboard,
+)
 
 
 class CommandHandler:
@@ -28,6 +40,9 @@ class CommandHandler:
         elif text.startswith("/menu"):
             self.handle_menu(chat_id)
 
+        elif text.startswith("/addmember"):
+            self.handle_add_member(chat_id, text)
+
         elif text.startswith("/add"):
             self.handle_add(chat_id, text)
 
@@ -45,9 +60,6 @@ class CommandHandler:
 
         elif text.startswith("/delete"):
             self.handle_delete(chat_id, text)
-        
-        elif text.startswith("/addmember"):
-            self.handle_add_member(chat_id, text)
 
         elif text.startswith("/members"):
             self.handle_members(chat_id)
@@ -75,43 +87,15 @@ class CommandHandler:
     def handle_help(self, chat_id):
         self.bot.send_message(
             chat_id,
-            "Основные команды:\n\n"
-            "/start — запуск бота\n"
-            "/help — помощь\n"
-            "/menu — главное меню\n\n"
-            "Задачи:\n"
-            "/add Название | Описание | Исполнитель | Дедлайн | Приоритет — создать задачу\n"
-            "/tasks — показать все задачи\n"
-            "/task id — показать задачу\n"
-            "/board — показать Kanban-доску\n"
-            "/move id status — изменить статус задачи\n"
-            "/delete id — удалить задачу\n\n"
-            "Статусы: backlog, todo, in_progress, review, done\n"
-            "Приоритеты: low, medium, high, critical"
+            HELP_TEXT,
+            reply_markup=main_menu_keyboard(),
         )
 
     def handle_menu(self, chat_id):
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "📋 Доска", "callback_data": "show_board"},
-                    {"text": "📌 Все задачи", "callback_data": "show_tasks"},
-                ],
-                [
-                    {"text": "👥 Участники", "callback_data": "show_members"},
-                    {"text": "📊 Статистика", "callback_data": "show_stats"},
-                ],
-                [
-                    {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
-                    {"text": "❓ Помощь", "callback_data": "show_help"},
-                ],
-            ]
-        }
-
         self.bot.send_message(
             chat_id,
             "Главное меню бота.\n\nВыберите раздел:",
-            reply_markup=keyboard,
+            reply_markup=main_menu_keyboard(),
         )
 
     def handle_add(self, chat_id, text):
@@ -121,11 +105,7 @@ class CommandHandler:
         if len(parts) != 5:
             self.bot.send_message(
                 chat_id,
-                "Неверный формат команды.\n\n"
-                "Используй так:\n"
-                "/add Название | Описание | Исполнитель | Дедлайн | Приоритет\n\n"
-                "Пример:\n"
-                "/add Сделать README | Описать запуск проекта | Иван | 20.05 | high"
+                "Неверный формат команды.\n\n" + ADD_TASK_HELP_TEXT,
             )
             return
 
@@ -157,27 +137,26 @@ class CommandHandler:
             f"Исполнитель: {task.assignee}\n"
             f"Дедлайн: {task.deadline}\n"
             f"Приоритет: {task.priority}\n"
-            f"Статус: {task.status}"
+            f"Статус: {task.status}",
+            reply_markup=task_actions_keyboard(task.task_id),
         )
 
     def handle_tasks(self, chat_id):
         tasks = get_all_tasks_list()
 
         if not tasks:
-            self.bot.send_message(chat_id, "Задач пока нет.")
+            self.bot.send_message(
+                chat_id,
+                "Задач пока нет.",
+                reply_markup=tasks_keyboard([]),
+            )
             return
 
-        result = "Список задач:\n\n"
-
-        for task in tasks:
-            result += (
-                f"#{task.task_id} {task.title}\n"
-                f"Исполнитель: {task.assignee}\n"
-                f"Статус: {task.status}\n"
-                f"Приоритет: {task.priority}\n\n"
-            )
-
-        self.bot.send_message(chat_id, result)
+        self.bot.send_message(
+            chat_id,
+            format_tasks_list(tasks),
+            reply_markup=tasks_keyboard(tasks),
+        )
 
     def handle_task(self, chat_id, text):
         raw = text.replace("/task", "", 1).strip()
@@ -195,39 +174,20 @@ class CommandHandler:
             self.bot.send_message(chat_id, f"Задача #{raw} не найдена.")
             return
 
-        self.bot.send_message(chat_id, task.to_text())
+        self.bot.send_message(
+            chat_id,
+            task.to_text(),
+            reply_markup=task_actions_keyboard(task.task_id),
+        )
 
     def handle_board(self, chat_id):
         grouped_tasks = get_tasks_by_status_grouped()
 
-        titles = {
-            "backlog": "📥 BACKLOG",
-            "todo": "📝 TO DO",
-            "in_progress": "⚙️ IN PROGRESS",
-            "review": "👀 REVIEW",
-            "done": "✅ DONE",
-        }
-
-        result = "Kanban-доска:\n\n"
-
-        for status in ["backlog", "todo", "in_progress", "review", "done"]:
-            result += f"{titles[status]}\n"
-
-            tasks = grouped_tasks.get(status, [])
-
-            if not tasks:
-                result += "пусто\n\n"
-                continue
-
-            for task in tasks:
-                result += (
-                    f"#{task.task_id} {task.title} — "
-                    f"{task.assignee} — {task.priority}\n"
-                )
-
-            result += "\n"
-
-        self.bot.send_message(chat_id, result)
+        self.bot.send_message(
+            chat_id,
+            format_board(grouped_tasks),
+            reply_markup=board_keyboard(),
+        )
 
     def handle_move(self, chat_id, text):
         raw = text.replace("/move", "", 1).strip()
@@ -281,7 +241,7 @@ class CommandHandler:
             return
 
         self.bot.send_message(chat_id, f"Задача #{raw} удалена.")
-    
+
     def handle_add_member(self, chat_id, text):
         name = text.replace("/addmember", "", 1).strip()
 
