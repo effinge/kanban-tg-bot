@@ -8,8 +8,8 @@ class Task:
     description: str
     assignee: str
     deadline: str
-    priority: str = "medium"
-    status: str = "backlog"
+    priority: str
+    status: str
     created_at: str | None = None
 
     def to_text(self):
@@ -21,3 +21,4 @@ class Task:
             f"Приоритет: {self.priority}\n"
             f"Дедлайн: {self.deadline}"
         )
+
