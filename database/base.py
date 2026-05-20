@@ -24,8 +24,9 @@ def init_db():
         assignee TEXT,
         deadline TEXT,
         priority TEXT,
-        status TEXT DEFAULT 'new',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        status TEXT DEFAULT 'backlog',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (team_id) REFERENCES teams(id)
     )
     """)
 
@@ -58,6 +59,30 @@ def init_db():
         FOREIGN KEY (task_id) REFERENCES tasks(id)
     )
     """)
+    
+    cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        owner_user_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            username TEXT,
+            role TEXT DEFAULT 'member',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (team_id) REFERENCES teams(id)
+        )
+        """)    
 
     conn.commit()
     conn.close()
@@ -272,3 +297,101 @@ def get_members_count():
     conn.close()
 
     return count
+
+def add_team(name, code, owner_user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO teams (name, code, owner_user_id)
+        VALUES (?, ?, ?)
+        """,
+        (name, code, owner_user_id),
+    )
+
+    team_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    return team_id
+
+
+def get_team_by_code(code):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, name, code, owner_user_id
+        FROM teams
+        WHERE code = ?
+        """,
+        (code,),
+    )
+
+    team = cursor.fetchone()
+
+    conn.close()
+
+    return team
+
+
+def add_team_member(team_id, user_id, username, role="member"):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO team_members (team_id, user_id, username, role)
+        VALUES (?, ?, ?, ?)
+        """,
+        (team_id, user_id, username, role),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_user_team(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT teams.id, teams.name, teams.code
+        FROM teams
+        JOIN team_members ON teams.id = team_members.team_id
+        WHERE team_members.user_id = ?
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+
+    team = cursor.fetchone()
+
+    conn.close()
+
+    return team
+
+
+def get_team_members(team_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, user_id, username, role
+        FROM team_members
+        WHERE team_id = ?
+        ORDER BY id
+        """,
+        (team_id,),
+    )
+
+    members = cursor.fetchall()
+
+    conn.close()
+
+    return members
