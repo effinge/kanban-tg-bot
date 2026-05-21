@@ -2,7 +2,7 @@ import os
 import sqlite3
 import sys
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 DB_DIR = "database"
 DB_NAME = os.path.join(DB_DIR, "dbase.db")
