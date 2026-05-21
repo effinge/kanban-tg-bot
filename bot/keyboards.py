@@ -25,6 +25,33 @@ def main_menu_keyboard():
                 {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
                 {"text": "❓ Помощь", "callback_data": "show_help"},
             ],
+            [
+                {"text": "🚪 Выйти из команды", "callback_data": "leave_team_confirm"},
+            ],
+        ]
+    }
+
+
+def team_members_keyboard():
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🚪 Выйти из команды", "callback_data": "leave_team_confirm"},
+            ],
+            [
+                {"text": "🏠 Главное меню", "callback_data": "main_menu"},
+            ],
+        ]
+    }
+
+
+def leave_team_confirm_keyboard():
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "✅ Да, выйти", "callback_data": "leave_team"},
+                {"text": "↩️ Отмена", "callback_data": "show_members"},
+            ],
         ]
     }
 

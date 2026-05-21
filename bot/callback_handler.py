@@ -1,11 +1,12 @@
 from services.task_service import (
+    create_task,
     get_all_tasks_list,
     get_task_by_id,
     get_tasks_by_status_grouped,
     move_task,
     delete_task_by_id,
 )
-from services.member_service import get_members_text
+from services.team_service import get_team_members_text, leave_team, user_has_team
 from services.stats_service import get_stats_text, get_deadlines_text
 from services.formatter import (
     ADD_TASK_HELP_TEXT,
@@ -17,15 +18,14 @@ from bot.keyboards import (
     after_task_created_keyboard,
     board_keyboard,
     delete_confirm_keyboard,
+    leave_team_confirm_keyboard,
     main_menu_keyboard,
     task_actions_keyboard,
     task_status_keyboard,
+    team_members_keyboard,
     tasks_keyboard,
 )
 
-
-from services.team_service import user_has_team, get_team_members_text
-from services.task_service import create_task
 
 class CallbackHandler:
     def __init__(self, bot):
@@ -63,6 +63,12 @@ class CallbackHandler:
 
         elif callback_data == "show_members":
             self.show_members(chat_id, user_id)
+
+        elif callback_data == "leave_team_confirm":
+            self.confirm_leave_team(chat_id, user_id)
+
+        elif callback_data == "leave_team":
+            self.handle_leave_team(chat_id, user_id)
 
         elif callback_data == "show_stats":
             self.show_stats(chat_id)
@@ -123,9 +129,6 @@ class CallbackHandler:
             reply_markup=board_keyboard(),
         )
 
-    def show_members(self, chat_id):
-        self.bot.send_message(chat_id, get_members_text())
-
     def show_stats(self, chat_id):
         self.bot.send_message(chat_id, get_stats_text())
 
@@ -160,8 +163,39 @@ class CallbackHandler:
             task.to_text(),
             reply_markup=task_actions_keyboard(task.task_id),
         )
+
     def show_members(self, chat_id, user_id):
-        self.bot.send_message(chat_id, get_team_members_text(user_id))
+        self.bot.send_message(
+            chat_id,
+            get_team_members_text(user_id),
+            reply_markup=team_members_keyboard(),
+        )
+
+    def confirm_leave_team(self, chat_id, user_id):
+        if not user_has_team(user_id):
+            self.bot.send_message(chat_id, "Ты не состоишь в команде.")
+            return
+
+        self.bot.send_message(
+            chat_id,
+            "Ты точно хочешь выйти из команды?",
+            reply_markup=leave_team_confirm_keyboard(),
+        )
+
+    def handle_leave_team(self, chat_id, user_id):
+        success, message = leave_team(user_id)
+
+        if user_id in self.bot.user_states:
+            del self.bot.user_states[user_id]
+
+        if not success:
+            self.bot.send_message(chat_id, message)
+            return
+
+        self.bot.send_message(
+            chat_id,
+            message + "\n\nЧтобы снова работать с командой, используй /start."
+        )
 
     def show_move_menu(self, chat_id, callback_data):
         task_id = self._get_task_id(callback_data, "task:move_menu:")

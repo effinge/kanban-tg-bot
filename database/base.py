@@ -411,3 +411,22 @@ def get_team_members(team_id):
     conn.close()
 
     return members
+
+
+def remove_team_member(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM team_members
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    )
+
+    conn.commit()
+    deleted = cursor.rowcount
+    conn.close()
+
+    return deleted > 0

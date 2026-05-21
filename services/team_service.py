@@ -7,6 +7,7 @@ from database.base import (
     get_team_by_code,
     get_user_team,
     get_team_members,
+    remove_team_member,
 )
 
 
@@ -123,3 +124,17 @@ def get_team_members_text(user_id):
         result += f"{index}. @{username} — {role}\n"
 
     return result
+
+
+def leave_team(user_id):
+    team = get_user_team(user_id)
+
+    if team is None:
+        return False, "Ты не состоишь в команде."
+
+    success = remove_team_member(user_id)
+
+    if not success:
+        return False, "Не удалось выйти из команды."
+
+    return True, f"Ты вышел из команды «{team[1]}»."
