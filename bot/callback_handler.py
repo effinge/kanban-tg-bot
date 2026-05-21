@@ -14,6 +14,7 @@ from services.formatter import (
     format_tasks_list,
 )
 from bot.keyboards import (
+    after_task_created_keyboard,
     board_keyboard,
     delete_confirm_keyboard,
     main_menu_keyboard,
@@ -324,8 +325,26 @@ class CallbackHandler:
             self.bot.send_message(chat_id, "Нет активного создания задачи.")
             return
 
+        if state.get("step") != "priority":
+            self.bot.send_message(
+                chat_id,
+                "Приоритет можно выбрать только после названия, описания, "
+                "исполнителя и дедлайна."
+            )
+            return
+
         priority = callback_data.replace("priority_", "", 1)
-        data = state["data"]
+        data = state.get("data", {})
+        required_fields = ["title", "description", "assignee", "deadline"]
+        missing_fields = [field for field in required_fields if not data.get(field)]
+
+        if missing_fields:
+            self.bot.send_message(
+                chat_id,
+                "Не хватает данных для создания задачи. Начни создание заново."
+            )
+            del self.bot.user_states[user_id]
+            return
 
         task = create_task(
             title=data["title"],
@@ -337,18 +356,6 @@ class CallbackHandler:
 
         del self.bot.user_states[user_id]
 
-        keyboard = {
-            "inline_keyboard": [
-                [
-                    {"text": "🧱 Открыть доску", "callback_data": "show_board"},
-                    {"text": "📋 Все задачи", "callback_data": "show_tasks"},
-                ],
-                [
-                    {"text": "🏠 Главное меню", "callback_data": "main_menu"},
-                ],
-            ]
-        }
-
         self.bot.send_message(
             chat_id,
             "Задача создана!\n\n"
@@ -357,5 +364,5 @@ class CallbackHandler:
             f"Дедлайн: {task.deadline}\n"
             f"Приоритет: {task.priority}\n"
             f"Статус: {task.status}",
-            reply_markup=keyboard,
+            reply_markup=after_task_created_keyboard(),
         )

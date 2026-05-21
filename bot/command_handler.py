@@ -398,11 +398,12 @@ class CommandHandler:
             data["deadline"] = text
             state["step"] = "priority"
 
-        self.bot.send_message(
-            chat_id,
-            "Выбери приоритет задачи:",
-            reply_markup=task_priority_keyboard(),
-        )
-
         state["data"] = data
         self.bot.user_states[user_id] = state
+
+        if state["step"] == "priority":
+            self.bot.send_message(
+                chat_id,
+                "Выбери приоритет задачи:",
+                reply_markup=task_priority_keyboard(),
+            )
