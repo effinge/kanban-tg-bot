@@ -25,8 +25,7 @@ def init_db():
         deadline TEXT,
         priority TEXT,
         status TEXT DEFAULT 'backlog',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (team_id) REFERENCES teams(id)
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
