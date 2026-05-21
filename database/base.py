@@ -4,11 +4,12 @@ import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_NAME = os.path.join(BASE_DIR, "dbase.db")
+DB_DIR = "database"
+DB_NAME = os.path.join(DB_DIR, "dbase.db")
 
 
 def get_connection():
+    os.makedirs(DB_DIR, exist_ok=True)
     return sqlite3.connect(DB_NAME)
 
 def init_db():
@@ -23,7 +24,7 @@ def init_db():
         assignee TEXT,
         deadline TEXT,
         priority TEXT,
-        status TEXT DEFAULT 'new',
+        status TEXT DEFAULT 'backlog',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -57,6 +58,30 @@ def init_db():
         FOREIGN KEY (task_id) REFERENCES tasks(id)
     )
     """)
+    
+    cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        owner_user_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            team_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            username TEXT,
+            role TEXT DEFAULT 'member',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (team_id) REFERENCES teams(id)
+        )
+        """)    
 
     conn.commit()
     conn.close()
@@ -66,9 +91,9 @@ def add_task(title, description, assignee, deadline, priority) -> int:
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO tasks (title, description, assignee, deadline, priority)
-    VALUES (?, ?, ?, ?, ?)
-    """, (title, description, assignee, deadline, priority))
+    INSERT INTO tasks (title, description, assignee, deadline, priority, status)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (title, description, assignee, deadline, priority, "backlog"))
 
     conn.commit()
     task_id = cursor.lastrowid
@@ -202,6 +227,206 @@ def get_comments_by_task(task_id):
     conn.close()
     return comments
 
-print(get_all_tasks())
-# add_task("Test Task", "This is a test task", "John Doe", "2024-12-31", "high")
-# print(get_all_tasks())
+def get_tasks_count_by_status():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, COUNT(*)
+        FROM tasks
+        GROUP BY status
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return dict(rows)
+
+def get_tasks_ordered_by_deadline():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, title, description, assignee, deadline, priority, status, created_at
+        FROM tasks
+        ORDER BY deadline
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+def get_total_tasks_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM tasks
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+def get_members_count():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM members
+        """
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+def add_team(name, code, owner_user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO teams (name, code, owner_user_id)
+        VALUES (?, ?, ?)
+        """,
+        (name, code, owner_user_id),
+    )
+
+    team_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    return team_id
+
+
+def get_team_by_code(code):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, name, code, owner_user_id
+        FROM teams
+        WHERE code = ?
+        """,
+        (code,),
+    )
+
+    team = cursor.fetchone()
+
+    conn.close()
+
+    return team
+
+
+def add_team_member(team_id, user_id, username, role="member"):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM team_members
+        WHERE team_id = ? AND user_id = ?
+        """,
+        (team_id, user_id),
+    )
+
+    existing_member = cursor.fetchone()
+
+    if existing_member is not None:
+        conn.close()
+        return False
+
+    cursor.execute(
+        """
+        INSERT INTO team_members (team_id, user_id, username, role)
+        VALUES (?, ?, ?, ?)
+        """,
+        (team_id, user_id, username, role),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+def get_user_team(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT teams.id, teams.name, teams.code
+        FROM teams
+        JOIN team_members ON teams.id = team_members.team_id
+        WHERE team_members.user_id = ?
+        LIMIT 1
+        """,
+        (user_id,),
+    )
+
+    team = cursor.fetchone()
+
+    conn.close()
+
+    return team
+
+
+def get_team_members(team_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT user_id, username, role
+        FROM team_members
+        WHERE team_id = ?
+        ORDER BY id
+        """,
+        (team_id,),
+    )
+
+    members = cursor.fetchall()
+
+    conn.close()
+
+    return members
+
+
+def remove_team_member(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM team_members
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    )
+
+    conn.commit()
+    deleted = cursor.rowcount
+    conn.close()
+
+    return deleted > 0
