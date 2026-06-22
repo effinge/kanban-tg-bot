@@ -56,6 +56,33 @@ def get_deadlines(telegram_id):
     return _get_list("deadlines", telegram_id)
 
 
+def fetch_notifications():
+    try:
+        response = requests.get(
+            f"{SITE_API_URL}/telegram/notifications/pending",
+            headers=HEADERS,
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException:
+        return []
+
+
+def ack_notifications(ids):
+    if not ids:
+        return
+    try:
+        requests.post(
+            f"{SITE_API_URL}/telegram/notifications/ack",
+            json={"ids": ids},
+            headers=HEADERS,
+            timeout=10,
+        )
+    except requests.RequestException:
+        pass
+
+
 def format_tasks(tasks):
     if not tasks:
         return "На сайте у тебя пока нет задач."

@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 from bot.command_handler import CommandHandler
 from bot.callback_handler import CallbackHandler
+from services import site_api
+
+NOTIFY_INTERVAL_SECONDS = 30
 
 
 class TelegramBot:
@@ -15,9 +18,10 @@ class TelegramBot:
         self.token = os.getenv("BOT_TOKEN")
         self.api_url = f"https://api.telegram.org/bot{self.token}"
         self.last_update_id = 0
+        self.last_notify_check = 0
 
         self.user_states = {}
-        
+
         self.command_handler = CommandHandler(self)
         self.callback_handler = CallbackHandler(self)
 
@@ -77,4 +81,20 @@ class TelegramBot:
                 elif "callback_query" in update:
                     self.callback_handler.handle(update["callback_query"])
 
+            self.deliver_notifications()
             time.sleep(1)
+
+    def deliver_notifications(self):
+        now = time.time()
+        if now - self.last_notify_check < NOTIFY_INTERVAL_SECONDS:
+            return
+        self.last_notify_check = now
+
+        items = site_api.fetch_notifications()
+        delivered = []
+        for item in items:
+            self.send_message(item["telegram_id"], item["text"])
+            delivered.append(item["id"])
+
+        if delivered:
+            site_api.ack_notifications(delivered)
