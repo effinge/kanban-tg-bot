@@ -103,6 +103,9 @@ class CommandHandler:
                     {"text": "🔑 Присоединиться к команде", "callback_data": "join_team"},
                 ],
                 [
+                    {"text": "🔗 Привязать аккаунт сайта", "callback_data": "site_link"},
+                ],
+                [
                     {"text": "❓ Помощь", "callback_data": "show_start_help"},
                 ],
             ]

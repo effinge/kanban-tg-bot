@@ -27,11 +27,11 @@ ADD_TASK_HELP_TEXT = (
 )
 
 BOARD_TITLES = {
-    "backlog": "📥 BACKLOG",
-    "todo": "📝 TO DO",
-    "in_progress": "⚙️ IN PROGRESS",
-    "review": "👀 REVIEW",
-    "done": "✅ DONE",
+    "backlog": "⚪ Бэклог",
+    "todo": "🔘 Нужно сделать",
+    "in_progress": "🟡 В процессе",
+    "review": "🔵 На проверке",
+    "done": "🟢 Выполнено",
 }
 
 BOARD_STATUSES = ["backlog", "todo", "in_progress", "review", "done"]

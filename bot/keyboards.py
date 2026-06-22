@@ -1,9 +1,9 @@
 TASK_STATUSES = [
-    ("backlog", "Backlog"),
-    ("todo", "To Do"),
-    ("in_progress", "In Progress"),
-    ("review", "Review"),
-    ("done", "Done"),
+    ("backlog", "Бэклог"),
+    ("todo", "Нужно сделать"),
+    ("in_progress", "В процессе"),
+    ("review", "На проверке"),
+    ("done", "Выполнено"),
 ]
 
 
@@ -24,6 +24,13 @@ def main_menu_keyboard():
             [
                 {"text": "⏰ Дедлайны", "callback_data": "show_deadlines"},
                 {"text": "❓ Помощь", "callback_data": "show_help"},
+            ],
+            [
+                {"text": "🌐 Мои задачи (сайт)", "callback_data": "site_mytasks"},
+                {"text": "📅 Мои дедлайны (сайт)", "callback_data": "site_deadlines"},
+            ],
+            [
+                {"text": "🔗 Привязать аккаунт сайта", "callback_data": "site_link"},
             ],
             [
                 {"text": "🚪 Выйти из команды", "callback_data": "leave_team_confirm"},

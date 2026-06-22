@@ -8,6 +8,7 @@ from services.task_service import (
 )
 from services.team_service import get_team_members_text, leave_team, user_has_team
 from services.stats_service import get_stats_text, get_deadlines_text
+from services import site_api
 from services.formatter import (
     ADD_TASK_HELP_TEXT,
     HELP_TEXT,
@@ -79,6 +80,15 @@ class CallbackHandler:
         elif callback_data == "show_help":
             self.show_help(chat_id)
 
+        elif callback_data == "site_link":
+            self.show_site_link(chat_id, user_id, callback_query["from"].get("username"))
+
+        elif callback_data == "site_mytasks":
+            self.show_site_tasks(chat_id, user_id)
+
+        elif callback_data == "site_deadlines":
+            self.show_site_deadlines(chat_id, user_id)
+
         elif callback_data == "task:add_help":
             self.show_add_help(chat_id)
 
@@ -141,6 +151,40 @@ class CallbackHandler:
             HELP_TEXT,
             reply_markup=main_menu_keyboard(),
         )
+
+    def show_site_link(self, chat_id, user_id, username):
+        data, error = site_api.request_link_code(user_id, username)
+        if error:
+            self.bot.send_message(chat_id, error)
+            return
+        self.bot.send_message(
+            chat_id,
+            "Привязка к сайту IMCTech Kanban.\n\n"
+            f"Твой код: {data['code']}\n"
+            f"Действует {data['expires_in_minutes']} мин.\n\n"
+            "Зайди на сайт под своим аккаунтом, нажми кнопку «Telegram» "
+            "и введи этот код.",
+        )
+
+    def show_site_tasks(self, chat_id, user_id):
+        tasks = site_api.get_tasks(user_id)
+        if tasks is None:
+            self.bot.send_message(
+                chat_id,
+                "Сначала привяжи аккаунт: кнопка «Привязать аккаунт сайта» в /start.",
+            )
+            return
+        self.bot.send_message(chat_id, site_api.format_tasks(tasks))
+
+    def show_site_deadlines(self, chat_id, user_id):
+        tasks = site_api.get_deadlines(user_id)
+        if tasks is None:
+            self.bot.send_message(
+                chat_id,
+                "Сначала привяжи аккаунт: кнопка «Привязать аккаунт сайта» в /start.",
+            )
+            return
+        self.bot.send_message(chat_id, site_api.format_deadlines(tasks))
 
     def show_add_help(self, chat_id):
         self.bot.send_message(chat_id, ADD_TASK_HELP_TEXT)
