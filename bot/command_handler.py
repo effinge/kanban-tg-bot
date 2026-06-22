@@ -10,6 +10,7 @@ from services.task_service import (
 from services.member_service import create_member, get_members_text
 from services.stats_service import get_stats_text, get_deadlines_text
 from services.team_service import create_team, join_team
+from services import site_api
 from services.formatter import (
     ADD_TASK_HELP_TEXT,
     HELP_TEXT,
@@ -73,6 +74,15 @@ class CommandHandler:
 
         elif text.startswith("/stats"):
             self.handle_stats(chat_id)
+
+        elif text.startswith("/mydeadlines"):
+            self.handle_my_deadlines(chat_id, user_id)
+
+        elif text.startswith("/mytasks"):
+            self.handle_my_tasks(chat_id, user_id)
+
+        elif text.startswith("/link"):
+            self.handle_link(chat_id, user_id, message["from"].get("username"))
 
         elif text.startswith("/deadlines"):
             self.handle_deadlines(chat_id)
@@ -283,7 +293,35 @@ class CommandHandler:
 
     def handle_deadlines(self, chat_id):
         self.bot.send_message(chat_id, get_deadlines_text())
-        
+
+    def handle_link(self, chat_id, user_id, username):
+        data, error = site_api.request_link_code(user_id, username)
+        if error:
+            self.bot.send_message(chat_id, error)
+            return
+        self.bot.send_message(
+            chat_id,
+            "Привязка к сайту IMCTech Kanban.\n\n"
+            f"Твой код: {data['code']}\n"
+            f"Действует {data['expires_in_minutes']} мин.\n\n"
+            "Зайди на сайт под своим аккаунтом, нажми кнопку «Telegram» "
+            "и введи этот код."
+        )
+
+    def handle_my_tasks(self, chat_id, user_id):
+        tasks = site_api.get_tasks(user_id)
+        if tasks is None:
+            self.bot.send_message(chat_id, "Сначала привяжи аккаунт командой /link.")
+            return
+        self.bot.send_message(chat_id, site_api.format_tasks(tasks))
+
+    def handle_my_deadlines(self, chat_id, user_id):
+        tasks = site_api.get_deadlines(user_id)
+        if tasks is None:
+            self.bot.send_message(chat_id, "Сначала привяжи аккаунт командой /link.")
+            return
+        self.bot.send_message(chat_id, site_api.format_deadlines(tasks))
+
     def handle_user_state(self, message):
         chat_id = message["chat"]["id"]
         user_id = message["from"]["id"]

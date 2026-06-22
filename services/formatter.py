@@ -10,6 +10,10 @@ HELP_TEXT = (
     "/board — показать Kanban-доску\n"
     "/move id status — изменить статус задачи\n"
     "/delete id — удалить задачу\n\n"
+    "Сайт IMCTech Kanban:\n"
+    "/link — привязать аккаунт сайта (получить код)\n"
+    "/mytasks — мои задачи с сайта\n"
+    "/mydeadlines — мои дедлайны с сайта\n\n"
     "Статусы: backlog, todo, in_progress, review, done\n"
     "Приоритеты: low, medium, high, critical"
 )
